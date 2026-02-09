@@ -1,27 +1,30 @@
-
+# App Idea: general anayltical data searchable by Game/Genre/Publisher/Platform
 import zipfile
 import pandas as pd
 import streamlit as st
 import altair as alt
 
+# Data from Kaggle https://www.kaggle.com/datasets/gregorut/videogamesales
 ZIP_PATH = "game_sales_data/vgsales.csv.zip"
 CSV_NAME = "vgsales.csv"
 
+#Streamlit title (use set_page_config to fit charts and title)
 st.set_page_config(page_title="Video Game Sales Explorer", layout="wide")
 
+# Data loading (use cache to avoid problems with zip) 
 @st.cache_data
 def load_data(zip_path: str, csv_name: str) -> pd.DataFrame:
     with zipfile.ZipFile(zip_path) as z:
         with z.open(csv_name) as f:
             df = pd.read_csv(f)
 
-    # Basic cleaning
+    # Need to convert Year variable to numeric
     df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
-    df["YearInt"] = df["Year"].round().astype("Int64")  # nullable integer
+    df["YearInt"] = df["Year"].round().astype("Int64")  
     for c in ["Genre", "Publisher", "Platform", "Name"]:
         df[c] = df[c].astype(str).replace({"nan": None})
 
-    # Helpful computed columns
+    # Total sales check
     df["Region_Total"] = df["NA_Sales"] + df["EU_Sales"] + df["JP_Sales"] + df["Other_Sales"]
     # (Global_Sales is already provided, but Region_Total can help sanity-check)
     return df
@@ -31,15 +34,18 @@ df = load_data(ZIP_PATH, CSV_NAME)
 st.title("🎮 Video Game Sales Explorer")
 st.caption("Search by genre and/or publisher, then explore sales analytics (Global + regional).")
 
-# --- Sidebar Filters ---
+# Sidebar Filters
 st.sidebar.header("Filters")
 
+#searchable bar for game filtering 
 name_query = st.sidebar.text_input("Search game name (contains)", value="").strip()
 
+#sorting 
 genres = sorted([g for g in df["Genre"].dropna().unique() if g != "None"])
 publishers = sorted([p for p in df["Publisher"].dropna().unique() if p != "None"])
 platforms = sorted([p for p in df["Platform"].dropna().unique() if p != "None"])
 
+#making sidebars
 sel_genres = st.sidebar.multiselect("Game type (Genre)", options=genres, default=[])
 sel_publishers = st.sidebar.multiselect("Company (Publisher)", options=publishers, default=[])
 sel_platforms = st.sidebar.multiselect("Platform", options=platforms, default=[])
@@ -50,7 +56,7 @@ sel_years = st.sidebar.slider("Year range", min_value=year_min, max_value=year_m
 
 top_n = st.sidebar.slider("Top N (charts/tables)", min_value=5, max_value=30, value=10, step=1)
 
-# --- Apply Filters ---
+# Applying Filters 
 f = df.copy()
 
 if name_query:
@@ -67,7 +73,7 @@ if sel_platforms:
 
 f = f[f["YearInt"].between(sel_years[0], sel_years[1], inclusive="both")]
 
-# --- KPIs ---
+# Key Performance Indicators
 left, mid, right, far = st.columns(4)
 
 total_global = float(f["Global_Sales"].sum()) if len(f) else 0.0
@@ -83,22 +89,23 @@ if len(f):
 
 left.metric("Total Global Sales (M units)", f"{total_global:,.2f}")
 mid.metric("# Titles", f"{num_titles:,}")
-right.metric("Avg Sales / Title (M)", f"{avg_global:,.2f}")
+right.metric("Avg Sales / Title (Millions)", f"{avg_global:,.2f}")
 far.metric("Top Game (Global)", f"{top_game_sales:,.2f} M" if top_game else "—", top_game if top_game else "")
 
 st.divider()
 
-# --- Charts Row 1: Sales by Year + Region Mix ---
+# Basic Charts: Sales by Year + Region Mix Total
 c1, c2 = st.columns([2, 1])
 
 with c1:
     st.subheader("Global Sales Over Time")
+   #aggregate by year
     by_year = (
         f.dropna(subset=["YearInt"])
          .groupby("YearInt", as_index=False)["Global_Sales"].sum()
          .sort_values("YearInt")
     )
-
+    #dont plot unless there's data 
     if len(by_year):
         chart = (
             alt.Chart(by_year)
@@ -125,6 +132,7 @@ with c2:
             float(f["Other_Sales"].sum()),
         ]
     })
+    # Don't plot regions without any sales
     region_totals = region_totals[region_totals["Sales"] > 0]
 
     if len(region_totals):
@@ -144,7 +152,7 @@ with c2:
 
 st.divider()
 
-# --- Charts Row 2: Top Publishers + Top Genres ---
+# Top Publishers + Top Genres Charts 
 c3, c4 = st.columns(2)
 
 with c3:
@@ -197,7 +205,7 @@ with c4:
 
 st.divider()
 
-# --- Table: Top Games ---
+#  Top games table
 st.subheader(f"Top Games (Global Sales) — showing top {top_n}")
 cols = ["Rank", "Name", "Platform", "YearInt", "Genre", "Publisher",
         "NA_Sales", "EU_Sales", "JP_Sales", "Other_Sales", "Global_Sales"]
@@ -210,10 +218,3 @@ top_games = (
 
 st.dataframe(top_games, use_container_width=True, hide_index=True)
 
-# --- Download filtered data ---
-st.download_button(
-    label="Download filtered data (CSV)",
-    data=f.to_csv(index=False).encode("utf-8"),
-    file_name="vgsales_filtered.csv",
-    mime="text/csv"
-)
