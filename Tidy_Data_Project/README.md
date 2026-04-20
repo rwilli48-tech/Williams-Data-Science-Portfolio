@@ -6,7 +6,7 @@ This project is meant to transform a provided data set to follow the "tidy data 
 
 This project uses an old and simplifed verision of the *Mutant Moneyball Data* dataset. This data is related to the article entitled Mutant Moneyball on Rally. Github origin of this data can be found here: https://github.com/EliCash82/mutantmoneyball/tree/main
 
-For the adapted version that was used for this project, see mutant_moneyball.csv in this repository.
+For the adapted version that was used for this project, see mutant_moneyball.csv in this repository: https://github.com/rwilli48-tech/Williams-Data-Science-Portfolio/blob/main/Tidy_Data_Project/mutant_moneyball.csv 
 
 
 ---
