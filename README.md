@@ -3,7 +3,7 @@ This portfolio contains all completed projects for my Intro to Data Science cour
 
 ## Ongoing and Completed Projects 
 1. Game Sales Data Anaysis Machine: 
-2. Tidy Data Project: https://github.com/rwilli48-tech/TidyData-Project
+2. Tidy Data Project: https://github.com/rwilli48-tech/Williams-Data-Science-Portfolio/blob/main/Tidy_Data_Project/README.md
 * This jupyter is a excerise in preprocessing, data cleaning, and all things "Tidy" in Tidy Data. If you're intrested in checking out please click the link above.
 4. MLStreamlitAPP: https://github.com/rwilli48-tech/Williams-Data-Science-Portfolio/blob/main/MLStreamlitApp/README.md
 
