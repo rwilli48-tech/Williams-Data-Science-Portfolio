@@ -1,0 +1,4 @@
+# any folders starting with "Week" are for class assignments and should be ignored
+Week*
+# ignore .env file with API keys
+.env
